@@ -94,7 +94,7 @@ enum MODE {
                 {\
                     fprintf (logFile, LONG_LINE);\
                     fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "Stack[%p](%d) \"" #ptr_stk "\" was created in file %s in function %s(str %d)\n", ptr_stk, isErr, ptr_stk->nameFileCreat, ptr_stk->nameFuncCreat, ptr_stk->lineCreat);\
+                    fprintf (logFile, "Stack[%p](%d) \"" #(ptr_stk) "\" was created in file %s in function %s(str %d)\n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
                     fprintf (logFile, "%s\n", text);\
                     fprintf (logFile, LONG_LINE);\
                     printf ("Please, check log file \"log.txt\".\n");\
@@ -102,14 +102,14 @@ enum MODE {
                 else\
                     fprintf (logFile, "Everything is OK");\
                 if (canPrint)\
-                    dump (*ptr_stk, logFile);\
+                    dump (*(ptr_stk), logFile);\
                 else \
                     printf ("Error information cannot be printed. Sorry.\n");\
                 if (isErr)\
                     abort()
 #endif
 
-#if defined(NDEBUG_STK) && !defined(DEBUG_STK) 
+#if defined(NDEBUG_STK) && !defined(DEBUG_STK)
         #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
                 size_t num = dump_call_num ();\
                 printf ("Number of the \"LOGDUMP\" function call is %zu", num); \
@@ -117,7 +117,7 @@ enum MODE {
                 {\
                     fprintf (logFile, LONG_LINE);\
                     fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "About \"" #ptr_stk "\": stack[%p](%d) has been creating at %s at %s(%d) \n", ptr_stk, isErr, ptr_stk->nameFileCreat, ptr_stk->nameFuncCreat, ptr_stk->lineCreat);\
+                    fprintf (logFile, "About \"" #(ptr_stk) "\": stack[%p](%d) has been creating at %s at %s(%d) \n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
                     fprintf (logFile, "%s\n", text);\
                     fprintf (logFile, LONG_LINE);\
                     printf ("Please, check log file \"log.txt\".\n");\
@@ -125,7 +125,7 @@ enum MODE {
                 else \
                     fprintf (logFile, "Everything is OK");\
                 if (canPrint)\
-                    dump (*ptr_stk, logFile);\
+                    dump (*(ptr_stk), logFile);\
                 else \
                     printf ("Error information cannot be printed. Sorry.\n");
 #endif

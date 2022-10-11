@@ -1,16 +1,17 @@
+#define NDEBUG_STK
 #include "stack.h"
-#define NDEBUG_STK 1
+
 
 int main (void)
 {
     stack_t stk = {};
+    log_ok();
     FILE * logfile = fopen ("log.txt", "w");
-    printf ("logfile = %p\n", logfile);
 
     GET_INFO_STK();
     Ctor (&stk, 5);
-    //LOGDUMP (YES, logfile, &stk, "first attempt", NO);
-    //dump(stk, logfile);
+    LOGDUMP(YES, logfile, &stk, "first attempt", NO);
+    dump(stk, logfile);
     printf ("in main\n");
     Push (&stk, 4);
     printf ("in main\n");
@@ -188,82 +189,82 @@ int struct_validator (stack_t * stk)
 
     if (stk == nullptr)
     {
-        LOGDUMP (NO, log, stk, "The pointer to the stack is null", YES);
+        LOGDUMP(NO, log, stk, "The pointer to the stack is null", YES);
         fclose (log);
         err_sum |= ptr_stk_null;
     }
     if (stk->n_memb < 0)
     {
-        LOGDUMP (NO, log, stk, "The number of members in the buffer is less then zero", YES);
+        LOGDUMP(NO, log, stk, "The number of members in the buffer is less then zero", YES);
         fclose (log);
         free (stk->data);
         err_sum |= bad_size;
     }
     if (stk->n_memb > stk->capacity)
     {
-        LOGDUMP (NO, log, stk, "The number of members in the buffer is greater than its capacity", YES);
+        LOGDUMP(NO, log, stk, "The number of members in the buffer is greater than its capacity", YES);
         fclose (log);
         free (stk->data);
         err_sum |= size_more_capac;
     }
     if (stk->data == nullptr)
     {
-        LOGDUMP (NO, log, stk, "The pointer to buffer is null", YES);
+        LOGDUMP(NO, log, stk, "The pointer to buffer is null", YES);
         fclose (log);
         err_sum |= ptr_buf_null;
     }  
     if (stk->capacity <= 0)
     {
-        LOGDUMP (NO, log, stk, "The capacity of the buffer is less than zero", YES);
+        LOGDUMP(NO, log, stk, "The capacity of the buffer is less than zero", YES);
         fclose (log);
         free (stk->data);
         err_sum |= bad_capacity;
     }
     if (stk->ptr_canary_data_first == nullptr)
     {
-        LOGDUMP (NO, log, stk, "The pointer to first buffer canary is null", YES);
+        LOGDUMP(NO, log, stk, "The pointer to first buffer canary is null", YES);
         fclose (log);
         err_sum |= bad_ptr_buf_can_frst;
     }
     if (stk->ptr_canary_data_second == nullptr)
     {
-        LOGDUMP (NO, log, stk, "The pointer to second buffer canary is null", YES);
+        LOGDUMP(NO, log, stk, "The pointer to second buffer canary is null", YES);
         fclose (log);
         err_sum |= bad_ptr_buf_can_scnd;
     }
     if (*(stk->ptr_canary_data_first) != BUF_CNR_FRST)
     {
-        LOGDUMP (NO, log, stk, "The first buffer canary died", YES);
+        LOGDUMP(NO, log, stk, "The first buffer canary died", YES);
         fclose (log);
         err_sum |= bad_buf_can_frst;
     }
     if (*(stk->ptr_canary_data_second) != BUF_CNR_SCND)
     {
-        LOGDUMP (NO, log, stk, "The second buffer canary died", YES);
+        LOGDUMP(NO, log, stk, "The second buffer canary died", YES);
         fclose (log);
         err_sum |= bad_buf_can_scnd;
     }
     if (stk->stk_cnr_first != STK_CNR_FRST)
     {
-        LOGDUMP (NO, log, stk, "The first canary died", YES);
+        LOGDUMP(NO, log, stk, "The first canary died", YES);
         fclose (log);
         err_sum |= bad_stk_can_frst;
     }
     if (stk->stk_cnr_second != STK_CNR_SCND)
     {
-        LOGDUMP (NO, log, stk, "The second canary died", YES);
+        LOGDUMP(NO, log, stk, "The second canary died", YES);
         fclose (log);
         err_sum |= bad_stk_can_scnd;
     }
     if (stk->hash_buf != calculateHash (stk->data, sizeof(2*sizeof(hash_t) + (stk->capacity)*sizeof(elem_t))))
     {
-        LOGDUMP (NO, log, stk, "Hashsum of buffer isn't correct", YES);
+        LOGDUMP(NO, log, stk, "Hashsum of buffer isn't correct", YES);
         fclose (log);
         err_sum |= bad_buf_hash;
     }
     if (stk->hash_stk != calculateHash (stk, sizeof(stack_t)))
     {
-        LOGDUMP (NO, log, stk, "Hashsum of stack isn't correct", YES);
+        LOGDUMP(NO, log, stk, "Hashsum of stack isn't correct", YES);
         fclose (log);
         err_sum |= bad_stk_hash;
     }
