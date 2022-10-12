@@ -29,32 +29,28 @@ typedef struct {
 
 static const elem_t poison = 0xBF;
 
-//const cnr_t BUF_CNR_FRST = 0xDEADBABE;
 const cnr_t BUF_CNR_SCND = 0xDEADBEEF;
-//const cnr_t STK_CNR_FRST = 0xC0CAC01A;
 const cnr_t STK_CNR_SCND = 0xBADF00D;
 
 enum ERRORS {
-    NOERR            =      0,
-    ptr_stk_null     = 1 << 1,
-    ptr_buf_null     = 1 << 2,
-    bad_capacity     = 1 << 3,
-    bad_size         = 1 << 4,
-    size_more_capac  = 1 << 5,
-    bad_buf_can_frst = 1 << 6,
-    bad_buf_can_scnd = 1 << 7,
-    bad_stk_can_frst = 1 << 8,
-    bad_stk_can_scnd = 1 << 9,
-    ptr_log_null     = 1 << 10,
-    bad_buf_hash     = 1 << 11,
-    bad_stk_hash = 1 << 12,
-    bad_ptr_buf_hash = 1 << 13,
-    bad_ptr_buf_can_frst = 1 << 14, //
-    bad_ptr_buf_can_scnd = 1 << 15
+    NOERR                =      0,
+    ptr_stk_null         = 1 << 1, //
+    ptr_buf_null         = 1 << 2, //
+    ptr_log_null         = 1 << 3, 
+    bad_capacity         = 1 << 4, //
+    bad_size             = 1 << 5, //
+    size_more_capac      = 1 << 6, //
+    bad_buf_can_scnd     = 1 << 7, //
+    bad_stk_can_scnd     = 1 << 8, //
+    bad_buf_hash         = 1 << 9, //
+    bad_stk_hash         = 1 << 10,//
+    bad_ptr_buf_hash     = 1 << 11,//
+    bad_ptr_buf_can_scnd = 1 << 12,//
+    bad_poison           = 1 << 13 //
 };
 
 enum isErr {
-    NO = 1,
+    NO = 0,
     YES = 1
 };
 

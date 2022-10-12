@@ -9,28 +9,28 @@ int main (void)
     FILE * logfile = fopen ("log.txt", "w");
     fclose (logfile);
     logfile = fopen ("log.txt", "a");
-    printf ("%p\n", logfile);
+    //printf ("%p\n", logfile);
     GET_INFO_STK();
-    printf ("After GET\n");
-    printf ("After first dump\n");
+    //printf ("After GET\n");
+    //printf ("After first dump\n");
 
     Ctor (&stk, 2);
     dump(stk, logfile);
-    printf ("in main\n");
+    //printf ("in main\n");
 
-    printf ("0. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    //printf ("0. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
     Push (&stk, 4);
-    printf ("1. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    //printf ("1. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
     Push (&stk, 5);
-    printf ("2. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    //printf ("2. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
     Push (&stk, 6);
-    printf ("3. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    //printf ("3. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
 
     dump(stk, logfile);
-    printf ("in main\n");
+    //printf ("in main\n");
 
     elem_t c = Pop (&stk);
-    printf ("c = %d\n", c);
+    //printf ("c = %d\n", c);
     
     SDtor (&stk);
     //dump(stk, logfile);
@@ -51,13 +51,13 @@ void Ctor (stack_t * stk, size_t capacity)
     stk -> ptr_canary_data_second = (cnr_t *) ((char *)data + sizeof(cnr_t) + (stk->capacity)*sizeof(elem_t));
     *(stk -> ptr_canary_data_second) = BUF_CNR_SCND;
 
-    printf ("In Ctor: ");
+    //printf ("In Ctor: ");
     for (size_t i = 0; i < stk->capacity; i++)
     {
         *((elem_t*)((char *)stk->data + i * sizeof(elem_t))) = poison;
-        printf ("%X, ", *((elem_t*)((char *)stk->data + i * sizeof(elem_t))));
+        //printf ("%X, ", *((elem_t*)((char *)stk->data + i * sizeof(elem_t))));
     }
-    printf ("\n");
+    //printf ("\n");
 
     *(stk -> ptr_canary_data_first) = calculateHash (stk->data, sizeof(sizeof(hash_t) + (stk->capacity)*sizeof(elem_t)));
     stk -> stk_cnr_first = calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t));
@@ -69,8 +69,8 @@ void Push (stack_t * stk, elem_t new_memb)
 {
     FILE * logfile = fopen ("log.txt", "a");
     stk->n_memb++;
-    printf ("stk->n_memb = %ld\n", stk->n_memb);
-    printf ("stk->capacity = %ld\n", stk->capacity);
+    //printf ("stk->n_memb = %ld\n", stk->n_memb);
+    //printf ("stk->capacity = %ld\n", stk->capacity);
     //dump (*stk, logfile);
     if (stk->n_memb > stk->capacity)
     {
@@ -78,12 +78,12 @@ void Push (stack_t * stk, elem_t new_memb)
     }
     //dump (*stk, logfile);
     //check_err (); // проверить на n_memb > capacity, если это так, то возвращать ошибку
-    printf ("stk->n_memb = %ld\n", stk->n_memb);
-    printf ("stk->capacity = %ld\n", stk->capacity);
+    //printf ("stk->n_memb = %ld\n", stk->n_memb);
+    //printf ("stk->capacity = %ld\n", stk->capacity);
     stk->data[(stk->n_memb)-1] = new_memb;
 
     hash_sum (stk);
-    printf ("Before STK_OK\n");
+    //printf ("Before STK_OK\n");
     STK_OK (stk);
     fclose (logfile);
 }
@@ -93,9 +93,11 @@ elem_t Pop (stack_t * stk)
     stk->n_memb--;
 
     hash_sum(stk);
-    STK_OK (stk);
+    // printf ("IN PP\n");
+    // STK_OK (stk);
+    // printf ("IN POOOP\n");
+    MY_ASSERT (stk->n_memb < 0, "Error : there are no variables in the stack"); 
 
-    // MY_ASSERT (stk->n_memb < 0, "Error : there are no variables in the stack"); //заложил в STK_OK
     elem_t pop = 0;
     if (stk->n_memb >= 0)
     {
@@ -124,7 +126,7 @@ void SDtor (stack_t * stk)
 
     free(stk->ptr_canary_data_first);
     // stk->data = nullptr;
-    printf ("SDtor ok\n");
+    //printf ("SDtor ok\n");
     stk->ptr_canary_data_first = nullptr;
     //free(stk);
     stk = nullptr;
@@ -135,7 +137,7 @@ void dump (stack_t stk, FILE * log_file)
     MY_ASSERT (log_file == nullptr, "logfile is close");
     if (stk.capacity == 0)
     {
-        printf ("stk.capacity = 0, maybe you don't use Dtor\n");
+        printf ("stk.capacity = 0, maybe you have used the function Dtor\n");
         abort();
     }
     //printf ("1\n");
@@ -161,7 +163,7 @@ void dump (stack_t stk, FILE * log_file)
     fprintf (log_file, "\nNumber of members = %zu, capacity = %zu\n", stk.n_memb, stk.capacity);
     fprintf (log_file, "stk was created in file = %s, in func = %s, in strings = %d\n", stk.nameFileCreat, stk.nameFuncCreat, stk.lineCreat);
     fprintf (log_file, LONG_LINE);
-    fflush (log_file);
+    fflush  (log_file);
 }
 
 size_t dump_call_num (void)
@@ -193,37 +195,54 @@ void resize (stack_t * stk, int mode)
     if (mode == increase)
     {
         stk->capacity *= RESIZE;
-        cnr_t temp = *(stk->ptr_canary_data_second);
-        printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
-        printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
+        cnr_t temp     = *(stk->ptr_canary_data_second);
+        //printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        //printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
+
         char * ptr = (char *) recalloc (stk->ptr_canary_data_first, (stk->capacity)*sizeof(elem_t) + 2*sizeof(hash_t), sizeof(char));
-        stk->ptr_canary_data_first = (hash_t *) ptr;
-        stk->data = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
-        stk->ptr_canary_data_second = (cnr_t *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
+
+        stk->ptr_canary_data_first     = (hash_t *) ptr;
+        stk->data                      = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
+        stk->ptr_canary_data_second    = (cnr_t *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
         *(stk->ptr_canary_data_second) = temp;
+
         MY_ASSERT (stk->ptr_canary_data_first == nullptr, "New pointer after resize is nullptr");
 
+        for (int i = 0; i < (stk->capacity - stk->n_memb); i++)
+        {
+            *((elem_t *)stk->data + (elem_t)i + (elem_t)stk->n_memb) = poison;
+        }
+
         //stk->ptr_canary_data_first = (cnr_t *) ptr;
-        printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
-        printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
+        //printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        //printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
         //check_err (); stk->data != nullptr
     }
     else if (mode == reduce)
     {
         stk->capacity /= RESIZE;
         cnr_t temp = *(stk->ptr_canary_data_second);
-        printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
-        printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
+
+        //printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        //printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
+
         char * ptr = (char *) recalloc (stk->ptr_canary_data_first, (stk->capacity)*sizeof(elem_t) + 2*sizeof(hash_t), sizeof(char));
-        stk->ptr_canary_data_first = (hash_t *) ptr;
-        stk->data = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
-        stk->ptr_canary_data_second = (cnr_t *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
+
+        stk->ptr_canary_data_first     = (hash_t *) ptr;
+        stk->data                      = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
+        stk->ptr_canary_data_second    = (cnr_t  *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
         *(stk->ptr_canary_data_second) = temp;
+
         MY_ASSERT (stk->ptr_canary_data_first == nullptr, "New pointer after resize is nullptr");
 
+        for (int i = 0; i < (stk->capacity - stk->n_memb); i++)
+        {
+            *((elem_t *)stk->data + (elem_t)i + (elem_t)stk->n_memb) = poison;
+        }
+
         //stk->ptr_canary_data_first = (cnr_t *) ptr;
-        printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
-        printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
+        //printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        //printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
         //check_err (); stk->data != nullptr
     }
     else 
@@ -231,18 +250,16 @@ void resize (stack_t * stk, int mode)
         printf ("You try to break my stack! .!. you\n");
         abort ();
     }
-        
-
-
+    
     hash_sum (stk);
 }
 
 void hash_sum (stack_t * stk)
 {
     *(stk -> ptr_canary_data_first) = calculateHash (stk->data, sizeof(sizeof(hash_t) + (stk->capacity)*sizeof(elem_t)));
-    printf ("Hashsum of data = %llX\n", *(stk -> ptr_canary_data_first));
+    //printf ("Hashsum of data = %llX\n", *(stk -> ptr_canary_data_first));
     stk -> stk_cnr_first = calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t));
-    printf ("Hashsum of stk = %llX\n", stk -> stk_cnr_first);
+    //printf ("Hashsum of stk = %llX\n", stk -> stk_cnr_first);
 }
 
 hash_t calculateHash (void * object, size_t byteSize)
@@ -264,95 +281,101 @@ int struct_validator (stack_t * stk)
 
     FILE * const log = fopen ("log.txt", "a");
     int err_sum = NOERR;
-    printf ("inside str_validator\n");
+    //printf ("inside str_validator\n");
     if (stk == nullptr)
     {
-        printf ("stk == nullptr\n");
+        //printf ("stk == nullptr\n");
         LOGDUMP(NO, log, stk, "The pointer to the stack is null", YES);
         fclose (log);
         err_sum |= ptr_stk_null;
     }
     if (stk->n_memb < 0)
     {
-        printf ("stk->n_memb < 0\n");
-        LOGDUMP(NO, log, stk, "The number of members in the buffer is less then zero", YES);
+        //printf ("stk->n_memb < 0\n");
+        LOGDUMP(YES, log, stk, "The number of members in the buffer is less then zero", YES);
         fclose (log);
         free (stk->data);
         err_sum |= bad_size;
     }
     if (stk->n_memb > stk->capacity)
     {
-        printf ("stk->n_memb > stk->capacity\n");
-        LOGDUMP(NO, log, stk, "The number of members in the buffer is greater than its capacity", YES);
+        //printf ("stk->n_memb > stk->capacity\n");
+        LOGDUMP(YES, log, stk, "The number of members in the buffer is greater than its capacity", YES);
         fclose (log);
         free (stk->data);
         err_sum |= size_more_capac;
     }
     if (stk->data == nullptr)
     {
-        printf ("stk->data == nullptr\n");
+        //printf ("stk->data == nullptr\n");
         LOGDUMP(NO, log, stk, "The pointer to buffer is null", YES);
         fclose (log);
         err_sum |= ptr_buf_null;
     }  
     if (stk->capacity <= 0)
     {
-        printf ("stk->capacity <= 0\n");
-        LOGDUMP(NO, log, stk, "The capacity of the buffer is less than zero", YES);
+        //printf ("stk->capacity <= 0\n");
+        LOGDUMP(YES, log, stk, "The capacity of the buffer is less than zero", YES);
         fclose (log);
         free (stk->data);
         err_sum |= bad_capacity;
     }
     if (stk->ptr_canary_data_first == nullptr)
     {
-        printf ("stk->ptr_canary_data_first == nullptr\n");
-        LOGDUMP(NO, log, stk, "The pointer to first buffer canary is null", YES);
+        //printf ("stk->ptr_canary_data_first == nullptr\n");
+        LOGDUMP(NO, log, stk, "The pointer to hash-sum of buffer is null", YES);
         fclose (log);
-        err_sum |= bad_ptr_buf_can_frst;
+        err_sum |= bad_ptr_buf_hash;
     }
     if (stk->ptr_canary_data_second == nullptr)
     {
-        printf ("stk->ptr_canary_data_second == nullptr\n");
+        //printf ("stk->ptr_canary_data_second == nullptr\n");
         LOGDUMP(NO, log, stk, "The pointer to second buffer canary is null", YES);
         fclose (log);
         err_sum |= bad_ptr_buf_can_scnd;
     }
     if (*(stk->ptr_canary_data_first) != calculateHash (stk->data, sizeof(sizeof(hash_t) + (stk->capacity)*sizeof(elem_t))))
     {
-        printf ("*(stk->ptr_canary_data_first) = %llX\n", *(stk->ptr_canary_data_first));
-        printf ("stk->hash_buf != calculateHash\n");
-        LOGDUMP(NO, log, stk, "Hashsum of buffer isn't correct", YES);
+        //printf ("*(stk->ptr_canary_data_first) = %llX\n", *(stk->ptr_canary_data_first));
+        //printf ("stk->hash_buf != calculateHash\n");
+        LOGDUMP(YES, log, stk, "Hashsum of buffer isn't correct", YES);
         fclose (log);
         err_sum |= bad_buf_hash;
     }
     if (*(stk->ptr_canary_data_second) != BUF_CNR_SCND)
     {
-        printf ("*(stk->ptr_canary_data_second) != BUF_CNR_SCND\n");
-        printf ("*(stk->ptr_canary_data_second) = %llX\n", *(stk->ptr_canary_data_second));
-        LOGDUMP(NO, log, stk, "The second buffer canary died", YES);
+        //printf ("*(stk->ptr_canary_data_second) != BUF_CNR_SCND\n");
+        //printf ("*(stk->ptr_canary_data_second) = %llX\n", *(stk->ptr_canary_data_second));
+        LOGDUMP(YES, log, stk, "The second buffer canary died", YES);
         fclose (log);
         err_sum |= bad_buf_can_scnd;
     }
     if (stk->stk_cnr_first != calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)))
     {
-        printf ("stk->stk_cnr_first == %llX", calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)));
-        printf ("stk->stk_cnr_first != calculateHash\n");
-        LOGDUMP(NO, log, stk, "Hashsum of stack isn't correct", YES);
+        //printf ("stk->stk_cnr_first == %llX", calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)));
+        //printf ("stk->stk_cnr_first != calculateHash\n");
+        LOGDUMP(YES, log, stk, "Hashsum of stack isn't correct", YES);
         fclose (log);
         err_sum |= bad_stk_hash;
-        
     }
     if (stk->stk_cnr_second != STK_CNR_SCND)
     {
-        printf ("stk->stk_cnr_second != STK_CNR_SCND\n");
-        LOGDUMP(NO, log, stk, "The second canary died", YES);
+        //printf ("stk->stk_cnr_second != STK_CNR_SCND\n");
+        LOGDUMP(YES, log, stk, "The second canary died", YES);
         fclose (log);
         err_sum |= bad_stk_can_scnd;
     }
-    // for (int i = 0; i < (stk->capacity - stk->n_memb); i++)
-    // {
-    //     if (*((elem_t*)((char *)stk->data + (i + stk->n_memb)*sizeof(elem_t) + sizeof(cnr_t))))
-    // }
+    for (int i = 0; i < (stk->capacity - stk->n_memb); i++)
+    {
+        if (*((elem_t *)stk->data + (elem_t)i + (elem_t)stk->n_memb) != poison)
+        {
+            //printf ("*((elem_t *)stk->data + (elem_t)i + (elem_t)stk->n_memb) = %d\n", *((elem_t *)stk->data + (elem_t)i + (elem_t)stk->n_memb));
+            //printf ("Poison isn't poison! ^_^\n");
+            LOGDUMP(YES, log, stk, "The value of the poison cell has been changed", YES);
+            fclose (log);
+            err_sum |= bad_poison;
+        }
+    }
     // LOGDUMP (YES, log, stk, "Hashsum of stack isn't correct", NO);
     
     return err_sum;
@@ -362,65 +385,58 @@ void decoder (int value_elem)
 {
     int count_of_err[32] = {0};
 
-    if ((value_elem & ptr_stk_null) == 2)
+    if ((value_elem & ptr_stk_null)         == 2)
     {
         count_of_err[1] = 1;
     }
-    if ((value_elem & ptr_buf_null) == 4)
+    if ((value_elem & ptr_buf_null)         == 4)
     {
         count_of_err[2] = 1;
     }
-    if ((value_elem & bad_capacity) == 8)
+    if ((value_elem & ptr_log_null)         == 8)
     {
         count_of_err[3] = 1;
     }
-    if ((value_elem & bad_size) == 16)
+    if ((value_elem & bad_capacity)         == 16)
     {
         count_of_err[4] = 1;
     }
-    if ((value_elem & size_more_capac) == 32)
+    if ((value_elem & bad_size)             == 32)
     {
         count_of_err[5] = 1;
     }
-    if ((value_elem & bad_buf_can_frst) == 64)
+    if ((value_elem & size_more_capac)      == 64)
     {
         count_of_err[6] = 1;
     }
-    if ((value_elem & bad_buf_can_scnd) == 128)
+    if ((value_elem & bad_buf_can_scnd)     == 128)
     {  
         count_of_err[7] = 1;
     }
-    if ((value_elem & bad_stk_can_frst) == 256)
+    if ((value_elem & bad_stk_can_scnd)     == 256)
     {
         count_of_err[8] = 1;
     }
-    if ((value_elem & bad_stk_can_scnd) == 512)
+    
+    if ((value_elem & bad_buf_hash)         == 512)
     {
         count_of_err[9] = 1;
     }
-    if ((value_elem & ptr_log_null) == 1024)
+    if ((value_elem & bad_stk_hash)         == 1024)
     {
         count_of_err[10] = 1;
     }
-    if ((value_elem & bad_buf_hash) == 2048)
+    if ((value_elem & bad_ptr_buf_hash)     == 2048)
     {
         count_of_err[11] = 1;
     }
-    if ((value_elem & bad_stk_hash) == 4096)
+    if ((value_elem & bad_ptr_buf_can_scnd) == 4096)
     {
         count_of_err[12] = 1;
     }
-    if ((value_elem & bad_ptr_buf_hash) == 8192)
+    if ((value_elem & bad_poison)           == 8192)
     {
         count_of_err[13] = 1;
-    }
-    if ((value_elem & bad_ptr_buf_can_frst) == 16384)
-    {
-        count_of_err[14] = 1;
-    }
-    if ((value_elem & bad_ptr_buf_can_scnd) == 32768)
-    {
-        count_of_err[15] = 1;
     }
 
     printf ("code of error is | ");
