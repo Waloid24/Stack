@@ -16,8 +16,6 @@ struct info_log {
 typedef struct {
     cnr_t    stk_cnr_first; //stack_canary_first
     elem_t * data;
-    hash_t   hash_stk;
-    hash_t   hash_buf;
     size_t   n_memb;
     size_t   capacity;
     cnr_t  * ptr_canary_data_first;
@@ -31,9 +29,9 @@ typedef struct {
 
 static const elem_t poison = 0xBF;
 
-const cnr_t BUF_CNR_FRST = 0xDEADBABE;
+//const cnr_t BUF_CNR_FRST = 0xDEADBABE;
 const cnr_t BUF_CNR_SCND = 0xDEADBEEF;
-const cnr_t STK_CNR_FRST = 0xC0CAC01A;
+//const cnr_t STK_CNR_FRST = 0xC0CAC01A;
 const cnr_t STK_CNR_SCND = 0xBADF00D;
 
 enum ERRORS {
@@ -56,8 +54,8 @@ enum ERRORS {
 };
 
 enum isErr {
-    NO,
-    YES
+    NO = 1,
+    YES = 1
 };
 
 enum MODE {
@@ -89,12 +87,12 @@ enum MODE {
 #if (!defined(NDEBUG_STK) && defined(DEBUG_STK))
         #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
                 size_t num = dump_call_num ();\
-                printf ("Number of the \"LOGDUMP\" function call is %zu", num);\
+                printf ("Number of the \"LOGDUMP\" function call is %zu\n", num);\
                 if (isErr)\
                 {\
                     fprintf (logFile, LONG_LINE);\
                     fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "Stack[%p](%d) \"" #(ptr_stk) "\" was created in file %s in function %s(str %d)\n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
+                    fprintf (logFile, "Stack[%p](%d) \"" #ptr_stk "\" was created in file %s in function %s(str %d)\n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
                     fprintf (logFile, "%s\n", text);\
                     fprintf (logFile, LONG_LINE);\
                     printf ("Please, check log file \"log.txt\".\n");\
@@ -109,21 +107,21 @@ enum MODE {
                     abort()
 #endif
 
-#if defined(NDEBUG_STK) && !defined(DEBUG_STK)
+#if (defined(NDEBUG_STK) && !defined(DEBUG_STK))
         #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
                 size_t num = dump_call_num ();\
-                printf ("Number of the \"LOGDUMP\" function call is %zu", num); \
+                printf ("Number of the \"LOGDUMP\" function call is %zu\n", num);\
                 if (isErr)\
                 {\
                     fprintf (logFile, LONG_LINE);\
                     fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "About \"" #(ptr_stk) "\": stack[%p](%d) has been creating at %s at %s(%d) \n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
+                    fprintf (logFile, "About \"" #ptr_stk "\": stack[%p](%d) has been creating at %s at %s(%d) \n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
                     fprintf (logFile, "%s\n", text);\
                     fprintf (logFile, LONG_LINE);\
                     printf ("Please, check log file \"log.txt\".\n");\
                 }\
                 else \
-                    fprintf (logFile, "Everything is OK");\
+                    fprintf (logFile, "Everything is OK\n");\
                 if (canPrint)\
                     dump (*(ptr_stk), logFile);\
                 else \
@@ -141,6 +139,7 @@ enum MODE {
 //STK_OK -> struct_validator -> decoder
 #define STK_OK(ptr_stk) \
         do { \
+            printf ("STK_OK\n"); \
             int sum_err = 0; \
             if ((sum_err = struct_validator(ptr_stk)) != NOERR) \
         { \
