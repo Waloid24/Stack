@@ -14,11 +14,11 @@ struct info_log {
 };
 
 typedef struct {
-    cnr_t    stk_cnr_first; //stack_canary_first
+    hash_t    stk_cnr_first; //stack_canary_first
     elem_t * data;
     size_t   n_memb;
     size_t   capacity;
-    cnr_t  * ptr_canary_data_first;
+    hash_t  * ptr_canary_data_first;
     cnr_t  * ptr_canary_data_second;
     cnr_t    stk_cnr_second;
 

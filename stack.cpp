@@ -13,16 +13,26 @@ int main (void)
     GET_INFO_STK();
     printf ("After GET\n");
     printf ("After first dump\n");
-    Ctor (&stk, 5);
+
+    Ctor (&stk, 2);
     dump(stk, logfile);
     printf ("in main\n");
+
+    printf ("0. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
     Push (&stk, 4);
+    printf ("1. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    Push (&stk, 5);
+    printf ("2. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+    Push (&stk, 6);
+    printf ("3. *(stk.ptr_canary_data_first) = %llX\n", *(stk.ptr_canary_data_first));
+
     dump(stk, logfile);
     printf ("in main\n");
-    //elem_t c = Pop (&stk);
-    printf ("in main\n");
+
+    elem_t c = Pop (&stk);
+    printf ("c = %d\n", c);
+    
     SDtor (&stk);
-    printf ("in main\n");
     //dump(stk, logfile);
 
     return 0;
@@ -57,27 +67,35 @@ void Ctor (stack_t * stk, size_t capacity)
 
 void Push (stack_t * stk, elem_t new_memb)
 {
+    FILE * logfile = fopen ("log.txt", "a");
     stk->n_memb++;
     printf ("stk->n_memb = %ld\n", stk->n_memb);
     printf ("stk->capacity = %ld\n", stk->capacity);
+    //dump (*stk, logfile);
     if (stk->n_memb > stk->capacity)
     {
         resize (stk, increase);
     }
+    //dump (*stk, logfile);
     //check_err (); // проверить на n_memb > capacity, если это так, то возвращать ошибку
-    
+    printf ("stk->n_memb = %ld\n", stk->n_memb);
+    printf ("stk->capacity = %ld\n", stk->capacity);
     stk->data[(stk->n_memb)-1] = new_memb;
 
     hash_sum (stk);
     printf ("Before STK_OK\n");
     STK_OK (stk);
+    fclose (logfile);
 }
 
 elem_t Pop (stack_t * stk)
 {
     stk->n_memb--;
+
+    hash_sum(stk);
     STK_OK (stk);
-    MY_ASSERT (stk->n_memb < 0, "Error : there are no variables in the stack");
+
+    // MY_ASSERT (stk->n_memb < 0, "Error : there are no variables in the stack"); //заложил в STK_OK
     elem_t pop = 0;
     if (stk->n_memb >= 0)
     {
@@ -92,6 +110,7 @@ elem_t Pop (stack_t * stk)
 
     hash_sum(stk);
     STK_OK(stk);
+
     return pop;
 }
 
@@ -119,14 +138,14 @@ void dump (stack_t stk, FILE * log_file)
         printf ("stk.capacity = 0, maybe you don't use Dtor\n");
         abort();
     }
-    printf ("1\n");
+    //printf ("1\n");
     fprintf (log_file, LONG_LINE);
     fprintf (log_file, "Hashsum of stack  = %llx\n", stk.stk_cnr_first);
-    printf ("2\n");
+    //printf ("2\n");
     fprintf (log_file, "stk_cnr_second = %llx\n", stk.stk_cnr_second);
-    printf ("3\n");
+    //printf ("3\n");
     fprintf (log_file, "\nArray in struct:\n");
-    printf ("4\n");
+    //printf ("4\n");
 
     fprintf (log_file, "Hashsum of data: %llX\n", *(stk.ptr_canary_data_first));
     fprintf (log_file, "In data:");
@@ -138,10 +157,11 @@ void dump (stack_t stk, FILE * log_file)
     fprintf (log_file, "Second canary in data: %llX\n", *(stk.ptr_canary_data_second));
 
     
-    printf ("5\n");
+    //printf ("5\n");
     fprintf (log_file, "\nNumber of members = %zu, capacity = %zu\n", stk.n_memb, stk.capacity);
     fprintf (log_file, "stk was created in file = %s, in func = %s, in strings = %d\n", stk.nameFileCreat, stk.nameFuncCreat, stk.lineCreat);
     fprintf (log_file, LONG_LINE);
+    fflush (log_file);
 }
 
 size_t dump_call_num (void)
@@ -173,18 +193,46 @@ void resize (stack_t * stk, int mode)
     if (mode == increase)
     {
         stk->capacity *= RESIZE;
+        cnr_t temp = *(stk->ptr_canary_data_second);
+        printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
         char * ptr = (char *) recalloc (stk->ptr_canary_data_first, (stk->capacity)*sizeof(elem_t) + 2*sizeof(hash_t), sizeof(char));
-        //MY_ASSERT (ptr == nullptr, "");
-        stk->ptr_canary_data_first = (cnr_t *) ptr;
+        stk->ptr_canary_data_first = (hash_t *) ptr;
+        stk->data = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
+        stk->ptr_canary_data_second = (cnr_t *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
+        *(stk->ptr_canary_data_second) = temp;
+        MY_ASSERT (stk->ptr_canary_data_first == nullptr, "New pointer after resize is nullptr");
+
+        //stk->ptr_canary_data_first = (cnr_t *) ptr;
+        printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
         //check_err (); stk->data != nullptr
     }
-    if (mode == reduce)
+    else if (mode == reduce)
     {
         stk->capacity /= RESIZE;
+        cnr_t temp = *(stk->ptr_canary_data_second);
+        printf ("in resize before recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        printf ("The value of stk->ptr_canary_data_second BEFORE resize = %llX\n", *(stk->ptr_canary_data_second));
         char * ptr = (char *) recalloc (stk->ptr_canary_data_first, (stk->capacity)*sizeof(elem_t) + 2*sizeof(hash_t), sizeof(char));
-        //MY_ASSERT (ptr == nullptr, "");
-        stk->ptr_canary_data_first = (cnr_t *) ptr;
+        stk->ptr_canary_data_first = (hash_t *) ptr;
+        stk->data = (elem_t *)((char *)stk->ptr_canary_data_first + sizeof (hash_t));
+        stk->ptr_canary_data_second = (cnr_t *)((char *)stk->ptr_canary_data_first + (char)((stk->capacity)*sizeof(elem_t)) + sizeof(hash_t));
+        *(stk->ptr_canary_data_second) = temp;
+        MY_ASSERT (stk->ptr_canary_data_first == nullptr, "New pointer after resize is nullptr");
+
+        //stk->ptr_canary_data_first = (cnr_t *) ptr;
+        printf ("in resize after recalloc stk->ptr_canary_data_second = %p\n", stk->ptr_canary_data_second);
+        printf ("The value of stk->ptr_canary_data_second AFTER resize = %llX\n", *(stk->ptr_canary_data_second));
+        //check_err (); stk->data != nullptr
     }
+    else 
+    {
+        printf ("You try to break my stack! .!. you\n");
+        abort ();
+    }
+        
+
 
     hash_sum (stk);
 }
@@ -287,7 +335,7 @@ int struct_validator (stack_t * stk)
     }
     if (stk->stk_cnr_first != calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)))
     {
-        printf ("stk->stk_cnr_first == %lld", calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)));
+        printf ("stk->stk_cnr_first == %llX", calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t)));
         printf ("stk->stk_cnr_first != calculateHash\n");
         LOGDUMP(NO, log, stk, "Hashsum of stack isn't correct", YES);
         fclose (log);
