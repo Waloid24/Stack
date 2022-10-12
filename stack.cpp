@@ -6,7 +6,9 @@ int main (void)
 {
     stack_t stk = {};
     log_ok();
-    FILE * logfile = fopen ("log.txt", "a");
+    FILE * logfile = fopen ("log.txt", "w");
+    fclose (logfile);
+    logfile = fopen ("log.txt", "a");
     printf ("%p\n", logfile);
     GET_INFO_STK();
     printf ("After GET\n");
@@ -14,11 +16,8 @@ int main (void)
     Ctor (&stk, 5);
     dump(stk, logfile);
     printf ("in main\n");
-    dump(stk, logfile);
     Push (&stk, 4);
-
-    printf ("in main\n");
-    // dump(stk, logfile);
+    dump(stk, logfile);
     printf ("in main\n");
     //elem_t c = Pop (&stk);
     printf ("in main\n");
@@ -121,16 +120,28 @@ void dump (stack_t stk, FILE * log_file)
         abort();
     }
     printf ("1\n");
-    fprintf (log_file, "stk_cnr_first  = %llx\n", stk.stk_cnr_first);
+    fprintf (log_file, LONG_LINE);
+    fprintf (log_file, "Hashsum of stack  = %llx\n", stk.stk_cnr_first);
     printf ("2\n");
     fprintf (log_file, "stk_cnr_second = %llx\n", stk.stk_cnr_second);
     printf ("3\n");
     fprintf (log_file, "\nArray in struct:\n");
     printf ("4\n");
-    fwrite  (stk.data, sizeof(elem_t), sizeof(stk.data), log_file);
+
+    fprintf (log_file, "Hashsum of data: %llX\n", *(stk.ptr_canary_data_first));
+    fprintf (log_file, "In data:");
+    for (size_t i = 0; i < stk.capacity; i++)
+    {
+        fprintf (log_file, "%X, ", *((elem_t*)((char *)stk.data + i * sizeof(elem_t))));
+    }
+    fprintf (log_file, "\n");
+    fprintf (log_file, "Second canary in data: %llX\n", *(stk.ptr_canary_data_second));
+
+    
     printf ("5\n");
     fprintf (log_file, "\nNumber of members = %zu, capacity = %zu\n", stk.n_memb, stk.capacity);
     fprintf (log_file, "stk was created in file = %s, in func = %s, in strings = %d\n", stk.nameFileCreat, stk.nameFuncCreat, stk.lineCreat);
+    fprintf (log_file, LONG_LINE);
 }
 
 size_t dump_call_num (void)
@@ -181,7 +192,9 @@ void resize (stack_t * stk, int mode)
 void hash_sum (stack_t * stk)
 {
     *(stk -> ptr_canary_data_first) = calculateHash (stk->data, sizeof(sizeof(hash_t) + (stk->capacity)*sizeof(elem_t)));
+    printf ("Hashsum of data = %llX\n", *(stk -> ptr_canary_data_first));
     stk -> stk_cnr_first = calculateHash ((char*)stk + (char) sizeof (cnr_t), sizeof(stack_t)-sizeof(cnr_t));
+    printf ("Hashsum of stk = %llX\n", stk -> stk_cnr_first);
 }
 
 hash_t calculateHash (void * object, size_t byteSize)
