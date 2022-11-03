@@ -33,27 +33,24 @@ typedef struct {
 } stack_t;
 
 static const elem_t POISON = 0xBF;
-
 const cnr_t BUF_CNR_SCND = 0xDEADBEEF;
 const cnr_t STK_CNR_SCND = 0xBADF00D;
+const int RESIZE = 2; 
+const int THRESHOLD_RATIO = 4;
 
 enum ERRORS {
-    NOERR                =      0, // 
-    // ToDo: where is 1 << 0?
-    // ToDo: GLOBAL_CONST_CAPS
-    PTR_STK_NULL         = 1 << 1, //
-    PTR_BUF_NULL         = 1 << 2, //
-    PTR_LOG_NULL         = 1 << 3, 
-    bad_capacity         = 1 << 4, //
-    bad_size             = 1 << 5, //
-    size_more_capac      = 1 << 6, //
-    bad_buf_can_scnd     = 1 << 7, //
-    bad_stk_can_scnd     = 1 << 8, //
-    bad_buf_hash         = 1 << 9, //
-    bad_stk_hash         = 1 << 10,//
-    bad_ptr_buf_hash     = 1 << 11,//
-    bad_ptr_buf_can_scnd = 1 << 12,//
-    bad_poison           = 1 << 13 //
+    NOERR                =      0, //
+    PTR_STK_NULL         = 1 << 0, //
+    PTR_BUF_NULL         = 1 << 1, //
+    PTR_LOG_NULL         = 1 << 2, 
+    SIZE_MORE_CAPACITY   = 1 << 3, //
+    BAD_BUF_CAN_SCND     = 1 << 4, //
+    BAD_STK_CAN_SCND     = 1 << 5, //
+    BAD_BUF_HASH         = 1 << 6, //
+    BAD_STK_HASH         = 1 << 7, //
+    BAD_PTR_BUF_HASH     = 1 << 8, //
+    BAD_PTR_BUF_CANARY   = 1 << 9, //
+    BAD_POISON           = 1 << 10 //
 };
 
 enum is_error {
@@ -71,13 +68,12 @@ enum is_abort {
     YES_ABORT = 1
 };
 
+//-------------------------------------------------DEFINES----------------------------------------------------- 
+
 #define LONG_LINE "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n"
 
 #define STK_CTOR(stk, capacity, name_stk)\
         stack_ctor(stk, capacity, name_stk, __LINE__, __PRETTY_FUNCTION__, __FILE__)
-
-const int RESIZE = 2; 
-const int THRESHOLD_RATIO = 4;
 
 #if (!defined(NDEBUG_STK) && defined(DEBUG_STK))
     #define LOGDUMP(canPrint, logFile, ptr_stk, message, is_err)\
@@ -97,23 +93,23 @@ const int THRESHOLD_RATIO = 4;
         }
 #endif
 
-#define STK_OK(ptr_stk) \
+#define STK_OK(ptr_stk, log) \
         do { \
             printf ("STK_OK\n"); \
             int sum_err = 0; \
-            if ((sum_err = struct_validator(ptr_stk)) != NOERR) \
+            if ((sum_err = struct_validator(ptr_stk, log)) != NOERR) \
             { \
                 printf ("Check log file \"log.txt\", you have some problems (with your head)\n"); \
                 decoder (sum_err); \
             } \
         } while (0);
 
-////---------------------------------------------------------------------------------------------
+//----------------------------------------------FUNCTIONS----------------------------------------------------
 //Creating and changing the stack
 void   stack_ctor       (stack_t * stk, size_t capacity, const char * name_stk, 
                          size_t create_line, const char * create_func, const char * create_file);
-void   stack_push       (stack_t *  stk, elem_t new_memb);
-elem_t stack_pop        (stack_t *  stk);
+void   stack_push       (stack_t * stk, elem_t new_memb, FILE * log);
+elem_t stack_pop        (stack_t * stk, FILE * log);
 void   stack_Dtor       (stack_t *  stk);
 
 //Output
@@ -129,12 +125,14 @@ void   logdump_hidden   (unsigned char can_print, FILE * stack_log, stack_t * st
                          unsigned char is_err, unsigned char is_abort,  const char * call_func, 
                          const char* call_file, unsigned int call_line);
 
+FILE * open_logfile     (const char * name_logfile);
+
 //Calculate hashsum
 void   stack_hash_sum   (stack_t * stk);
 hash_t calculate_hash   (void * object, size_t byte_size);
 
 //Stack and buffer check
-int    struct_validator (stack_t * stk);
+int    struct_validator (stack_t * stk, FILE * log);
 void   decoder          (int value_elem);
 void   log_ok           (void);
 
