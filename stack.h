@@ -1,39 +1,47 @@
+#ifndef STACK_H
+#define STACK_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "my_assert.h"
 #include <string.h>
  
 typedef int elem_t;
-typedef unsigned long long cnr_t;
+typedef unsigned long long cnr_t; // naming?
 typedef unsigned long long hash_t;
 
-struct info_log {
+struct info_log { // _t
     int    line;
     const char * name_func; 
     const char * name_file;
 };
 
 typedef struct {
-    hash_t    stk_cnr_first; //stack_canary_first
+    hash_t    stk_cnr_first; //stack_canary_first // useless commentary
     elem_t * data;
     size_t   n_memb;
     size_t   capacity;
+    const char * name;
+    size_t min_capacity; // snake or camel-case?
     hash_t  * ptr_canary_data_first;
     cnr_t  * ptr_canary_data_second;
-    cnr_t    stk_cnr_second;
-
     int      lineCreat;
     const char   * nameFuncCreat;
     const char   * nameFileCreat;
+    cnr_t    stk_cnr_second;
+
 } stack_t;
+//ToDo: хранить хэш буфера в структуре (?)
 
-static const elem_t poison = 0xBF;
+static const elem_t POISON = 0xBF;
 
-const cnr_t BUF_CNR_SCND = 0xDEADBEEF;
+const cnr_t BUF_CNR_SCND = 0xDEADBEEF; // ToDo: needs 8 bytes, not 4
 const cnr_t STK_CNR_SCND = 0xBADF00D;
 
 enum ERRORS {
-    NOERR                =      0,
+    NOERR                =      0, // 
+    // ToDo: where is 1 << 0?
+    // ToDo: GLOBAL_CONST_CAPS
     ptr_stk_null         = 1 << 1, //
     ptr_buf_null         = 1 << 2, //
     ptr_log_null         = 1 << 3, 
@@ -55,12 +63,14 @@ enum isErr {
 };
 
 enum MODE {
-    reduce,      //0
-    increase     //1
-};
+    reduce = 0,
+    increase = 1
+    };
 
-// #define poison_in_buf(num_in_poison, val_poison) \
-//     *((elem_t*)((unsigned char *)stk->data + num_in_poison * sizeof(elem_t) + sizeof(cnr_t))) = val_poison
+enum is_abort {
+    no_abort = 0,
+    yes_abort = 1
+};
 
 #define LONG_LINE "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n"
 
@@ -72,57 +82,25 @@ enum MODE {
     __PRETTY_FUNCTION__, \
     __FILE__ \
     };\
-    stk.lineCreat     = info.line;\
+    stk.lineCreat     = info.line; /*ToDo: it isn't true!!!!*/\
     stk.nameFuncCreat = info.name_func;\
     stk.nameFileCreat = info.name_file;\
 }
 
-//#define begin_buf (2*sizeof(cnr_t) + sizeof(buffer)) //in recalloc увеличиваем в 2 раза
-#define RESIZE 2
+const int RESIZE = 2; 
+const int THRESHOLD_RATIO = 4;
+
+// FIXME:
 
 #if (!defined(NDEBUG_STK) && defined(DEBUG_STK))
-        #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
-                size_t num = dump_call_num ();\
-                printf ("Number of the \"LOGDUMP\" function call is %zu\n", num);\
-                if (isErr)\
-                {\
-                    fprintf (logFile, LONG_LINE);\
-                    fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "Stack[%p](%d) \"" #ptr_stk "\" was created in file %s in function %s(str %d)\n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
-                    fprintf (logFile, "%s\n", text);\
-                    fprintf (logFile, LONG_LINE);\
-                    printf ("Please, check log file \"log.txt\".\n");\
-                }\
-                else\
-                    fprintf (logFile, "Everything is OK");\
-                if (canPrint)\
-                    dump (*(ptr_stk), logFile);\
-                else \
-                    printf ("Error information cannot be printed. Sorry.\n");\
-                if (isErr)\
-                    abort()
+    #define LOGDUMP(canPrint, logFile, ptr_stk, message, is_err)\
+        logdump_hidden(canPrint, logFile, ptr_stk, message, is_err, yes_abort, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 #endif
 
 #if (defined(NDEBUG_STK) && !defined(DEBUG_STK))
-        #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
-                size_t num = dump_call_num ();\
-                printf ("Number of the \"LOGDUMP\" function call is %zu\n", num);\
-                if (isErr)\
-                {\
-                    fprintf (logFile, LONG_LINE);\
-                    fprintf (logFile, "%s at %s(%d)\n", __PRETTY_FUNCTION__, __FILE__, __LINE__);\
-                    fprintf (logFile, "About \"" #ptr_stk "\": stack[%p](%d) has been creating at %s at %s(%d) \n", ptr_stk, isErr, (ptr_stk)->nameFileCreat, (ptr_stk)->nameFuncCreat, (ptr_stk)->lineCreat);\
-                    fprintf (logFile, "%s\n", text);\
-                    fprintf (logFile, LONG_LINE);\
-                    printf ("Please, check log file \"log.txt\".\n");\
-                }\
-                else \
-                    fprintf (logFile, "Everything is OK\n");\
-                if (canPrint)\
-                    dump (*(ptr_stk), logFile);\
-                else \
-                    printf ("Error information cannot be printed. Sorry.\n");
-#endif
+    #define LOGDUMP(canPrint, logFile, ptr_stk, message, is_err)\
+        logdump_hidden(canPrint, logFile, ptr_stk, message, is_err, no_abort, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#endif 
 
 #if (!defined(NDEBUG_STK) && !defined(DEBUG_STK))
         #define LOGDUMP(canPrint, logFile, ptr_stk, text, isErr)\
@@ -138,10 +116,10 @@ enum MODE {
             printf ("STK_OK\n"); \
             int sum_err = 0; \
             if ((sum_err = struct_validator(ptr_stk)) != NOERR) \
-        { \
-            printf ("Check log file \"log.txt\", you have some problems (with your head)\n"); \
-            decoder (sum_err); \
-        } \
+            { \
+                printf ("Check log file \"log.txt\", you have some problems (with your head)\n"); \
+                decoder (sum_err); \
+            } \
         } while (0);
         
 
@@ -149,25 +127,31 @@ enum MODE {
 
 ////---------------------------------------------------------------------------------------------
 //Creating and changing the stack
-void   Ctor          (stack_t *  stk, size_t capacity);
-void   Push          (stack_t *  stk, elem_t new_memb);
-elem_t Pop           (stack_t *  stk);
-void   SDtor         (stack_t *  stk);
+void   stack_ctor          (stack_t *  stk, size_t capacity, const char * name_stk);
+void   stack_push          (stack_t *  stk, elem_t new_memb);
+elem_t stack_pop           (stack_t *  stk);
+void   stack_Dtor         (stack_t *  stk);
 
 //Output
-void   dump          (stack_t stk, FILE * log_file);
+void   stack_dump        (stack_t stk, FILE * log_file);
 size_t dump_call_num (void);
 
 //Service function
-void * recalloc      (void * memblock, size_t n_memb, size_t size_memb);
-void   resize        (stack_t * stk, int mode);
+void * stack_recalloc      (void * memblock, size_t n_memb, size_t size_memb);
+void   stack_resize        (stack_t * stk, int mode);
+void   print_code_err(int * error_number);
+
+void logdump_hidden (unsigned char can_print, FILE * stack_log, stack_t * stk, const char * message, 
+                     unsigned char is_err, unsigned char is_abort,  const char * call_func, 
+                     const char* call_file, unsigned int call_line);
 
 //Calculate hashsum
-void   hash_sum      (stack_t * stk);
-hash_t calculateHash (void * object, size_t byteSize);
+void   stack_hash_sum      (stack_t * stk);
+hash_t calculate_hash (void * object, size_t byte_size);
 
 //Stack and buffer check
 int    struct_validator (stack_t * stk);
 void   decoder       (int value_elem);
 void   log_ok        (void);
 
+#endif
