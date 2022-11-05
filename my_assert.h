@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const int DEBUG_SOFT = 0;
+const int DEBUG_SOFT = 0;
 
 #ifdef MY_ASSERT
 	#undef MY_ASSERT

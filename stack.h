@@ -7,7 +7,7 @@
 #include <string.h>
  
 typedef int elem_t;
-typedef unsigned long long cnr_t; // naming?
+typedef unsigned long long canary_t;
 typedef unsigned long long hash_t;
 
 struct info_log_t { 
@@ -24,33 +24,33 @@ typedef struct {
     const char * name;
     size_t       min_capacity; 
     hash_t     * ptr_canary_hashsum;
-    cnr_t      * ptr_canary_data;
+    canary_t      * ptr_canary_data;
     size_t       line_create;
     const char * name_func_create;
     const char * name_file_create;
-    cnr_t        stk_cnr_second;
+    canary_t        stk_cnr_second;
 
 } stack_t;
 
-static const elem_t POISON = 0xBF;
-const cnr_t BUF_CNR_SCND = 0xDEADBEEF;
-const cnr_t STK_CNR_SCND = 0xBADF00D;
+const elem_t POISON_ELEM_STK = 0xBF;
+const canary_t BUF_CNR_SCND = 0xDEADBEEF;
+const canary_t STK_CNR_SCND = 0xBADF00D;
 const int RESIZE = 2; 
 const int THRESHOLD_RATIO = 4;
 
-enum ERRORS {
-    NOERR                =      0, //
+enum STK_ERRORS {
+    NOERR_STK                =      0, //
     PTR_STK_NULL         = 1 << 0, //
-    PTR_BUF_NULL         = 1 << 1, //
-    PTR_LOG_NULL         = 1 << 2, 
-    SIZE_MORE_CAPACITY   = 1 << 3, //
-    BAD_BUF_CAN_SCND     = 1 << 4, //
+    PTR_BUF_NULL_STK         = 1 << 1, //
+    PTR_LOG_NULL_STK         = 1 << 2, 
+    SIZE_MORE_CAPACITY_STK   = 1 << 3, //
+    BAD_BUF_CAN_SCND_STK     = 1 << 4, //
     BAD_STK_CAN_SCND     = 1 << 5, //
-    BAD_BUF_HASH         = 1 << 6, //
+    BAD_BUF_HASH_STK         = 1 << 6, //
     BAD_STK_HASH         = 1 << 7, //
-    BAD_PTR_BUF_HASH     = 1 << 8, //
-    BAD_PTR_BUF_CANARY   = 1 << 9, //
-    BAD_POISON           = 1 << 10 //
+    BAD_PTR_BUF_HASH_STK     = 1 << 8, //
+    BAD_PTR_BUF_CANARY_STK   = 1 << 9, //
+    BAD_POISON_STK           = 1 << 10 //
 };
 
 enum is_error {
@@ -93,17 +93,6 @@ enum is_abort {
         }
 #endif
 
-#define STK_OK(ptr_stk, log) \
-        do { \
-            printf ("STK_OK\n"); \
-            int sum_err = 0; \
-            if ((sum_err = struct_validator(ptr_stk, log)) != NOERR) \
-            { \
-                printf ("Check log file \"log.txt\", you have some problems (with your head)\n"); \
-                decoder (sum_err); \
-            } \
-        } while (0);
-
 //----------------------------------------------FUNCTIONS----------------------------------------------------
 //Creating and changing the stack
 void   stack_ctor       (stack_t * stk, size_t capacity, const char * name_stk, 
@@ -135,5 +124,7 @@ hash_t calculate_hash   (void * object, size_t byte_size);
 int    struct_validator (stack_t * stk, FILE * log);
 void   decoder          (int value_elem);
 void   log_ok           (void);
+void   stk_ok           (stack_t * stk, FILE * log);
+
 
 #endif
