@@ -19,7 +19,7 @@ int main (void)
     //printf ("After GET\n");
     //printf ("After first dump\n");
     fprintf (logfile, "Hi!\n");
-    STK_CTOR(&stk, 2, "stk");
+    stk_ctor(&stk, 2, "stk");
     stack_dump(stk, logfile);
     //printf ("in main\n");
 

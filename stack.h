@@ -70,9 +70,7 @@ enum is_abort {
 
 //-------------------------------------------------DEFINES----------------------------------------------------- 
 
-#define LONG_LINE "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n"
-
-#define STK_CTOR(stk, capacity, name_stk)\
+#define stk_ctor(stk, capacity, name_stk)\
         stack_ctor(stk, capacity, name_stk, __LINE__, __PRETTY_FUNCTION__, __FILE__)
 
 #if (!defined(NDEBUG_STK) && defined(DEBUG_STK))
